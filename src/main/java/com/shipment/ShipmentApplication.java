@@ -10,7 +10,7 @@ public class ShipmentApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ShipmentApplication.class, args);
-		log.info("Inventory App Running on http://localhost:8083");
+		log.info("Shipment App Running on http://localhost:8083");
 	}
 
 }
