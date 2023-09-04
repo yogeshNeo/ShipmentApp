@@ -7,6 +7,8 @@ import com.shipment.model.CustomerOrder;
 import com.shipment.model.InventoryEvent;
 import com.shipment.model.Shipment;
 import com.shipment.repository.ShipmentRepository;
+import com.shipment.utility.APIClient;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Controller;
 
 @Slf4j
 @Controller
+@AllArgsConstructor
 public class ShipmentController {
 
     @Autowired
@@ -22,6 +25,8 @@ public class ShipmentController {
 
     @Autowired
     private KafkaTemplate<String, InventoryEvent> kafkaTemplate;
+
+    private APIClient apiClient;
 
     @KafkaListener(topics = "new-inventory", groupId = "inventory-group")
     public void shipOrder(String event) throws JsonMappingException, JsonProcessingException {
@@ -41,8 +46,8 @@ public class ShipmentController {
             shipment.setStatus("success");
 
             log.info("shipment saved :::::");
-            this.repository.save(shipment);
-            // do other shipment logic ..
+            shipment = this.repository.save(shipment);
+            apiClient.sendNotification(shipment);
         } catch (Exception e) {
             shipment.setOrderId(order.getOrderId());
             shipment.setStatus("failed");
@@ -56,7 +61,6 @@ public class ShipmentController {
             log.info("shipment failed with reversed-inventory topic :::::");
 
             this.kafkaTemplate.send("reversed-inventory", reverseEvent);
-
         }
     }
 
